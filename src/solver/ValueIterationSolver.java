@@ -10,8 +10,9 @@ import problem.Matrix;
 import problem.ProblemSpec;
 import problem.VentureManager;
 
+import java.awt.*;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 
 public class ValueIterationSolver implements FundingAllocationAgent {
@@ -23,11 +24,14 @@ public class ValueIterationSolver implements FundingAllocationAgent {
     private List<double[]> rewards;
 
 	public ValueIterationSolver(ProblemSpec spec) throws IOException {
-	    this.spec = spec;
+		this.spec = spec;
 		ventureManager = spec.getVentureManager();
-        probabilities = spec.getProbabilities();
-        transations = new ArrayList<>();
+		probabilities = spec.getProbabilities();
+		transations = new ArrayList<>();
 		rewards = new ArrayList<>();
+		for (int i = 0; i < Math.pow(ventureManager.getMaxManufacturingFunds() + 1, ventureManager.getNumVentures()); i++){
+
+		}
 	}
 	
 	public void doOfflineComputation() {
