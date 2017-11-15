@@ -23,7 +23,8 @@ public class Runner {
 	private static int numSimulations = 0; 
 	
 	/** The default solver to use. */
-	public static String DEFAULT_SOLVER = "solver.MySolver";
+//	public static String DEFAULT_SOLVER = "solver.MySolver";
+	public static String DEFAULT_SOLVER = "solver.ValueIterationSolver";
 	/** The name of the solver class that will be used. */
 	private static String solverName = null;
 	
@@ -53,7 +54,10 @@ public class Runner {
 			simulator.reset();
 			if (RECREATE_SOLVER) {
 				solver = (FundingAllocationAgent)ctor.newInstance(spec);
+				long time = System.currentTimeMillis();
 				solver.doOfflineComputation();
+				System.out.println("Running time: " + (System.currentTimeMillis() - time) + "ms");
+				System.out.println();
 			}
 			
 			for (int i = 0; i < spec.getNumFortnights(); i++) {
