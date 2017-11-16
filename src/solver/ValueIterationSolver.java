@@ -43,7 +43,8 @@ public class ValueIterationSolver implements FundingAllocationAgent {
 		numberOfVentures = ventureManager.getNumVentures();
 		reward = new MDArray(numberOfVentures, maxFund + 1);
 		value = new MDArray(numberOfVentures, maxFund + 1);
-		actionArray = new ActionArray(numberOfVentures, maxAddition + 1);
+		actionArray = new ActionArray(numberOfVentures, maxFund + 1);
+//		actionArray = new ActionArray(numberOfVentures, maxAddition + 1);
 	}
 	
 	public void doOfflineComputation() {
@@ -91,17 +92,27 @@ public class ValueIterationSolver implements FundingAllocationAgent {
 				int validValue = 0;
 				iteration++;
 				for (int i = 0; i <= maxFund; i++) {
-					for (int j = 0; j <= maxFund; j++) {
+					for (int j = 0; j <= (maxFund - i); j++) {
 						double v = value.getValue(i, j);
 						double maxValue = -Double.MAX_VALUE;
+//						int action = Math.min(maxAddition, maxFund - i);
 						int actionOne = Math.min(maxAddition, maxFund - i);
-						int actionTwo = Math.min(maxAddition, maxFund - j);
+//						int actionTwo = Math.min(maxAddition, maxFund - j);
 						for (int a = 0; a <= actionOne; a++) {
+							int actionTwo = Math.min(maxAddition - a, maxFund - j);
 							for (int b = 0; b <= actionTwo; b++) {
+//						for (int a = 0; a <= actionOne; a++) {
+//							for (int b = 0; b <= actionTwo; b++) {
+								if ((i + j + a + b) > maxFund){
+									break;
+								}
 								double sumOfTransation = 0;
 								for (int orderOne = 0; orderOne <= i + a; orderOne++){
 									for (int orderTwo = 0; orderTwo <= j + b; orderTwo++){
-										sumOfTransation += transations.get(0).get(i + a, orderOne) * transations.get(1).get(j + b, orderTwo) * value.getValue(orderOne, orderTwo);
+										double t1 = transations.get(0).get(i + a, orderOne);
+										double t2 = transations.get(1).get(j + b, orderTwo);
+										double vprime = value.getValue(orderOne, orderTwo);
+										sumOfTransation += t1 * t2 * vprime;
 									}
 								}
 								double tempValue = reward.getValue(i + a, j + b) + discount * sumOfTransation;
@@ -117,28 +128,35 @@ public class ValueIterationSolver implements FundingAllocationAgent {
 						value.setValue(i, j, maxValue);
 						if (Math.abs(v - maxValue) < Math.pow(10, -7)) {
 							validValue++;
+//						} else if (Math.abs(v - maxValue) < Math.pow(10, -6)){
+//							System.out.println(i + " - " + j + ": " + (v - maxValue));
 						}
 					}
 				}
-				if (validValue == Math.pow(maxFund + 1, 2)){
+				if (validValue == ((2 + maxFund) * (maxFund + 1) / 2)){
 					break;
 				}
+//				System.out.println(validValue);
+//				System.out.println(Math.pow(maxFund + 1, 2) - validValue);
 			}
 		} else if (numberOfVentures == 3){
 			while (true) {
 				int validValue = 0;
 				iteration++;
 				for (int i = 0; i <= maxFund; i++) {
-					for (int j = 0; j <= maxFund; j++) {
-						for (int k = 0; k <= maxFund; k++) {
+					for (int j = 0; j <= (maxFund - i); j++) {
+						for (int k = 0; k <= (maxFund - i - j); k++) {
 							double v = value.getValue(i, j, k);
 							double maxValue = -Double.MAX_VALUE;
 							int actionOne = Math.min(maxAddition, maxFund - i);
-							int actionTwo = Math.min(maxAddition, maxFund - j);
-							int actionThree = Math.min(maxAddition, maxFund - k);
 							for (int a = 0; a <= actionOne; a++) {
+								int actionTwo = Math.min(maxAddition - a, maxFund - j);
 								for (int b = 0; b <= actionTwo; b++) {
+									int actionThree = Math.min(maxAddition - b - a, maxFund - k);
 									for (int c = 0; c <= actionThree; c++) {
+										if ((i + j + k + a + b + c) > maxFund){
+											break;
+										}
 										double sumOfTransation = 0;
 										for (int orderOne = 0; orderOne <= i; orderOne++){
 											for (int orderTwo = 0; orderTwo <= j; orderTwo++){
@@ -158,29 +176,32 @@ public class ValueIterationSolver implements FundingAllocationAgent {
 							value.setValue(i, j, k, maxValue);
 							if (Math.abs(v - maxValue) < Math.pow(10, -7)) {
 								validValue++;
+//							} else if (Math.abs(v - maxValue) < Math.pow(10, -6)){
+//								System.out.println(i + " - " + j + " - " + k + ": " + (v - maxValue));
 							}
 						}
 					}
 				}
-				if (validValue == Math.pow(maxFund + 1, 3)){
+				if (validValue == ((maxFund + 1) * (maxFund + 2) * (maxFund + 3) / 6)){
 					break;
 				}
+//				System.out.println(validValue);
 			}
 		}
-		System.out.println("Iteration: " + iteration);
+//		System.out.println("Iteration: " + iteration);
 	}
 
 	public void printAction(){
 		if (numberOfVentures == 2){
 			for (int i = 0; i <= maxFund; i++){
-				for (int j = 0; j <= maxFund; j++){
+				for (int j = 0; j <= (maxFund - i); j++){
 					System.out.println(i + ", " + j + " -> " + actionArray.getValue(i, j).toString());
 				}
 			}
 		} else if (numberOfVentures == 3){
 			for (int i = 0; i <= maxFund; i++){
-				for (int j = 0; j <= maxFund; j++){
-					for (int k = 0; k <= maxFund; k++) {
+				for (int j = 0; j <= (maxFund - i); j++){
+					for (int k = 0; k <= (maxFund - i - j); k++) {
 						System.out.println(i + ", " + j + ", " + k + " -> " + actionArray.getValue(i, j, k).toString());
 					}
 				}
@@ -253,21 +274,21 @@ public class ValueIterationSolver implements FundingAllocationAgent {
 
 		List<Integer> additionalFunding = new ArrayList<Integer>();
 
-		int totalManufacturingFunds = 0;
-		for (int i : manufacturingFunds) {
-			totalManufacturingFunds += i;
-		}
-		
-		int totalAdditional = 0;
-		for (int i = 0; i < ventureManager.getNumVentures(); i++) {
-			if (totalManufacturingFunds >= maxFund ||
-			        totalAdditional >= maxAddition) {
-				additionalFunding.add(0);
-			} else {
-				additionalFunding.add(1);
-				totalAdditional ++;
-				totalManufacturingFunds ++;
-			}
+		if (manufacturingFunds.size() == 2){
+			int i = manufacturingFunds.get(0);
+			int j = manufacturingFunds.get(1);
+			Point2D point2D = actionArray.getValue(i, j);
+			additionalFunding.add((int) point2D.getX());
+			additionalFunding.add((int) point2D.getY());
+
+		} else if (manufacturingFunds.size() == 3){
+			int i = manufacturingFunds.get(0);
+			int j = manufacturingFunds.get(1);
+			int k = manufacturingFunds.get(2);
+			Point3D point3D = actionArray.getValue(i, j, k);
+			additionalFunding.add((int) point3D.getX());
+			additionalFunding.add((int) point3D.getY());
+			additionalFunding.add((int) point3D.getZ());
 		}
 
 		return additionalFunding;

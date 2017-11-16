@@ -133,6 +133,7 @@ public class Simulator {
 		    throw new IllegalArgumentException("Amount of additional funding is too large.");
 		}
 		if(totalFunds > ventureManager.getMaxManufacturingFunds()) {
+			System.out.println();
 			throw new IllegalArgumentException("Maximum manufacturing funds exceeded.");
 		}
 

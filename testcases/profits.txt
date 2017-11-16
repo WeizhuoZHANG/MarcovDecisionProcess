@@ -1,0 +1,6 @@
+bronze_eg1
+Overall profit: 26911.020150
+bronze_eg2
+Overall profit: 32448.794272
+bronze_eg3
+Overall profit: 28957.082014
