@@ -6,10 +6,13 @@ package solver;
  * last updated by Nicholas Collins 19/10/17
  */
 
+import javafx.geometry.Point2D;
+import javafx.geometry.Point3D;
 import problem.Matrix;
 import problem.ProblemSpec;
 import problem.VentureManager;
 
+import javax.print.attribute.standard.NumberUp;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
@@ -27,7 +30,7 @@ public class ValueIterationSolver implements FundingAllocationAgent {
     private int numberOfVentures;
     private MDArray reward;
     private MDArray value;
-//    private MDArray actionArray;
+    private ActionArray actionArray;
 
 	public ValueIterationSolver(ProblemSpec spec) throws IOException {
 		this.spec = spec;
@@ -40,7 +43,7 @@ public class ValueIterationSolver implements FundingAllocationAgent {
 		numberOfVentures = ventureManager.getNumVentures();
 		reward = new MDArray(numberOfVentures, maxFund + 1);
 		value = new MDArray(numberOfVentures, maxFund + 1);
-//		actionArray = new MDArray(numberOfVentures, maxAddition + 1);
+		actionArray = new ActionArray(numberOfVentures, maxAddition + 1);
 	}
 	
 	public void doOfflineComputation() {
@@ -54,6 +57,7 @@ public class ValueIterationSolver implements FundingAllocationAgent {
 		}
 		initValueFunction(numberOfVentures, r);
 		doValueIteration();
+		printAction();
 	}
 
 	public void initValueFunction(int dimension, List<List<Double>> r){
@@ -89,19 +93,25 @@ public class ValueIterationSolver implements FundingAllocationAgent {
 				for (int i = 0; i <= maxFund; i++) {
 					for (int j = 0; j <= maxFund; j++) {
 						double v = value.getValue(i, j);
-						double maxValue = Double.MIN_VALUE;
+						double maxValue = -Double.MAX_VALUE;
 						int actionOne = Math.min(maxAddition, maxFund - i);
 						int actionTwo = Math.min(maxAddition, maxFund - j);
 						for (int a = 0; a <= actionOne; a++) {
 							for (int b = 0; b <= actionTwo; b++) {
 								double sumOfTransation = 0;
-								for (int orderOne = 0; orderOne <= i; orderOne++){
-									for (int orderTwo = 0; orderTwo <= j; orderTwo++){
+								for (int orderOne = 0; orderOne <= i + a; orderOne++){
+									for (int orderTwo = 0; orderTwo <= j + b; orderTwo++){
 										sumOfTransation += transations.get(0).get(i + a, orderOne) * transations.get(1).get(j + b, orderTwo) * value.getValue(orderOne, orderTwo);
 									}
 								}
 								double tempValue = reward.getValue(i + a, j + b) + discount * sumOfTransation;
-								maxValue = Math.max(tempValue, maxValue);
+
+//								double tempValue = reward.getValue(i + a, j + b) + discount * sumOfTransation;
+								if (tempValue > maxValue){
+									maxValue = tempValue;
+									actionArray.setValue(i, j, new Point2D(a, b));
+								}
+//								maxValue = Math.max(tempValue, maxValue);
 							}
 						}
 						value.setValue(i, j, maxValue);
@@ -122,7 +132,7 @@ public class ValueIterationSolver implements FundingAllocationAgent {
 					for (int j = 0; j <= maxFund; j++) {
 						for (int k = 0; k <= maxFund; k++) {
 							double v = value.getValue(i, j, k);
-							double maxValue = Double.MIN_VALUE;
+							double maxValue = -Double.MAX_VALUE;
 							int actionOne = Math.min(maxAddition, maxFund - i);
 							int actionTwo = Math.min(maxAddition, maxFund - j);
 							int actionThree = Math.min(maxAddition, maxFund - k);
@@ -137,7 +147,11 @@ public class ValueIterationSolver implements FundingAllocationAgent {
 											}
 										}
 										double tempValue = reward.getValue(i + a, j + b, k + c) + discount * sumOfTransation;
-										maxValue = Math.max(tempValue, maxValue);
+										if (tempValue > maxValue){
+											maxValue = tempValue;
+											actionArray.setValue(i, j, k, new Point3D(a, b, c));
+										}
+//										maxValue = Math.max(tempValue, maxValue);
 									}
 								}
 							}
@@ -154,6 +168,24 @@ public class ValueIterationSolver implements FundingAllocationAgent {
 			}
 		}
 		System.out.println("Iteration: " + iteration);
+	}
+
+	public void printAction(){
+		if (numberOfVentures == 2){
+			for (int i = 0; i <= maxFund; i++){
+				for (int j = 0; j <= maxFund; j++){
+					System.out.println(i + ", " + j + " -> " + actionArray.getValue(i, j).toString());
+				}
+			}
+		} else if (numberOfVentures == 3){
+			for (int i = 0; i <= maxFund; i++){
+				for (int j = 0; j <= maxFund; j++){
+					for (int k = 0; k <= maxFund; k++) {
+						System.out.println(i + ", " + j + ", " + k + " -> " + actionArray.getValue(i, j, k).toString());
+					}
+				}
+			}
+		}
 	}
 
 	public double rewardFunction(int i, int j, List<List<Double>> r){
